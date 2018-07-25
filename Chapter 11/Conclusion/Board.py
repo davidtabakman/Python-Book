@@ -80,14 +80,17 @@ class Board(object):
 
         return coord[0] * self.__delta_x, coord[1] * self.__delta_y
 
-    def add_plane(self, tile=(0, 0)):
+    def add_plane(self, coord=(0, 0)):
         """Adds a new plane at a specific tile (default 0,0)
         """
         plane = CrazyPlane()
         #Reshape the plane to fit one tile
         try:
             plane.set_image(pygame.transform.scale(plane.get_image(), (self.__delta_x, self.__delta_y)))
-            self.get_tiles()[tile[0]][tile[1]].set_plane(plane)
+            self.get_tiles()[coord[0]][coord[1]].set_plane(plane)
+        except IndexError:
+            print "error: failed to add plane at {} because: one of the tiles is out of the board".format(coord)
         except Exception, e:
-            print "error: failed to add plane at {} because: {}".format(tile, e)
+            print "error: failed to add plane at {} because: {}".format(coord, e)
+
 

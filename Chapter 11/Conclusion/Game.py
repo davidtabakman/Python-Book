@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pygame
 from Board import Board
+from Control import ControlTower
 
 #Constants
 WINDOW_WIDTH = 1000
@@ -8,7 +9,6 @@ WINDOW_HEIGHT = 1000
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
-IMAGE = 'tyler1.jpg'
 
 #Init screen
 pygame.init()
@@ -21,7 +21,12 @@ clock = pygame.time.Clock()
 
 #Create board
 board = Board(screen, 10, 10)
-board.add_plane((1, 10))
+control = ControlTower(board.get_tiles())
+board.add_plane((0, 1))
+board.add_plane((1, 0))
+board.add_plane((2, 0))
+board.add_plane((3, 0))
+
 
 finish = False
 while not finish:
@@ -30,6 +35,7 @@ while not finish:
             finish = True
     #Game stuff
     board.draw()
+
 
     #Render
     pygame.display.flip()
