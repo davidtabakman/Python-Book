@@ -19,13 +19,12 @@ pygame.display.set_caption("Game")
 #Craete clock
 clock = pygame.time.Clock()
 
+
 #Create board
 board = Board(screen, 10, 10)
 control = ControlTower(board.get_tiles())
 board.add_plane((0, 1))
-board.add_plane((1, 0))
-board.add_plane((2, 0))
-board.add_plane((3, 0))
+control.move_plane_random((0, 1))
 
 
 finish = False
@@ -34,9 +33,11 @@ while not finish:
         if event.type == pygame.QUIT:
             finish = True
     #Game stuff
+    for x in xrange(0, 10):
+        for y in xrange(0, 10):
+            control.control_coord((x, y))
     board.draw()
-
 
     #Render
     pygame.display.flip()
-    clock.tick()
+    clock.tick(60)
