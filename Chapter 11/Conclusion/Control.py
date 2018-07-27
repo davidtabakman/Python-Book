@@ -1,6 +1,41 @@
 # -*- coding: utf-8 -*-
 import random
 
+
+def get_adjacent_tiles(coord):
+    possible_x = []
+    possible_y = []
+    if coord[0] == 0:
+        possible_x.append(0)
+        possible_x.append(1)
+    elif coord[0] == 9:
+        possible_x.append(8)
+        possible_x.append(9)
+    else:
+        possible_x.append(coord[0] - 1)
+        possible_x.append(coord[0])
+        possible_x.append(coord[0] + 1)
+
+    if coord[1] == 0:
+        possible_y.append(0)
+        possible_y.append(1)
+    elif coord[1] == 9:
+        possible_y.append(8)
+        possible_y.append(9)
+    else:
+        possible_y.append(coord[1] - 1)
+        possible_y.append(coord[1])
+        possible_y.append(coord[1] + 1)
+
+    possible_coord = []
+    for x in possible_x:
+        for y in possible_y:
+            if not (x, y) == coord:
+                possible_coord.append((x, y))
+
+    return possible_coord
+
+
 class ControlTower(object):
 
     def __init__(self, tiles):
@@ -32,81 +67,44 @@ class ControlTower(object):
 
     def move_plane_random(self, coord_from):
         try:
-            coord_to_x = coord_from[0]
-            coord_to_y = coord_from[1]
-            if coord_to_x == 0:
-                coord_to_x += random.randrange(0, 2, 1)
-            elif coord_to_x == 9:
-                coord_to_x -= random.randrange(0, 2, 1)
-            else:
-                coord_to_x += random.randrange(-1, 2, 1)
-            if coord_to_y == 0:
-                if coord_to_x == coord_from[0]:
-                    coord_to_y += 1
-                else:
-                    coord_to_y += random.randrange(0, 2, 1)
-            elif coord_to_y == 9:
-                if coord_to_x == coord_from[0]:
-                    coord_to_y -= 1
-                else:
-                    coord_to_y -= random.randrange(0, 2, 1)
-            else:
-                if coord_to_x == coord_from[0]:
-                    coord_to_y += random.randrange(-1, 2, 2)
-                else:
-                    coord_to_y += random.randrange(-1, 2, 1)
-
-            self.move_plane(coord_from, (coord_to_x, coord_to_y))
+            adjacent_tiles = get_adjacent_tiles(coord_from)
+            self.move_plane(coord_from, adjacent_tiles[random.randint(0, len(adjacent_tiles) - 1)])
         except IndexError:
             print "error: failed to move plane from {} because: the tile is out of the board".format(coord_from)
         except Exception, e:
             print "error: failed to move plane from {} because: {}".format(coord_from, e)
 
-    def intervention_required(self, coord):
-        """Checks if an intervention is required at a specific coordinate on the board
+    def get_adjacent_planes(self, coord):
+        """Lists all adjacent planes coordinates to a plane at a coordinate
         Return Value:
-            True if there are two planes adjacent
-            False if not
+            Empty list if no adjacent planes found or there is no plane at the given coordinate
+            List of adjacent planes coordinates if there are any
         """
         try:
-            center_tile = self.get_tile_at_coord(coord)
-            if center_tile.get_plane() is None:
-                return False
+            adjacent_planes = []
             #Check adjacent tiles
-            from_x = coord[0] - 1
-            to_x = coord[0] + 2
-            if coord[0] == 0:
-                from_x += 1
-            elif coord[0] == 9:
-                to_x -= 1
-            from_y = coord[1] - 1
-            to_y = coord[1] + 2
-            if coord[1] == 0:
-                from_y += 1
-            elif coord[1] == 9:
-                to_y -= 1
-            #Upper tiles
-            if not coord[1] == 0:
-                for x in xrange(from_x, to_x):
-                    if self.get_tile_at_coord((x, from_y)).get_plane() is not None:
-                        return True
-            #Side tiles
-            if not coord[0] == 0:
-                if self.get_tile_at_coord((coord[0] - 1, coord[1])).get_plane() is not None:
-                    return True
-            elif not coord[0] == 9:
-                if self.get_tile_at_coord((coord[0] + 1, coord[1])).get_plane() is not None:
-                    return True
-            #Bottom tiles
-            if not coord[1] == 9:
-                for x in xrange(from_x, to_x):
-                    if self.get_tile_at_coord((x, to_y-1)).get_plane() is not None:
-                        return True
-            #No intervention needed
-            return False
+            for coord in get_adjacent_tiles(coord):
+                if not self.get_tile_at_coord(coord).get_plane() is None:
+                    adjacent_planes.append(coord)
+            return adjacent_planes
         except Exception, e:
             print "error checking intervention at {} because {}".format(coord, e)
-            return False
+            return []
+
+    def move_plane_algorithm(self, coord):
+        adjacent_planes = self.get_adjacent_planes(coord)
+        adjacent_tiles = get_adjacent_tiles(coord)
+        possible_coord = []
+        for tile in adjacent_tiles:
+            if not adjacent_planes.count(tile) > 0 and not tile == coord:
+                possible_coord.append(tile)
+        possible_coord.sort(key=self.coord_priority)
+        coord_to = possible_coord[0]
+
+        self.move_plane(coord, coord_to)
+
+    def coord_priority(self, coord):
+        return len(self.get_adjacent_planes(coord)) / float(len(get_adjacent_tiles(coord)))
 
     def control_coord(self, coord):
         """Checks if a specific coordinate needs intervention, if yes applies algorithm
@@ -115,9 +113,13 @@ class ControlTower(object):
             1 if move was random
             0 if algorithm was applied
         """
-        if self.get_tile_at_coord(coord) is None:
+        if self.get_tile_at_coord(coord).get_plane() is None:
             return 0
-        if self.intervention_required(coord) is False:
+        if len(self.get_adjacent_planes(coord)) == 0:
             self.move_plane_random(coord)
             return 1
+        else:
+            self.move_plane_algorithm(coord)
+            return 0
+
 

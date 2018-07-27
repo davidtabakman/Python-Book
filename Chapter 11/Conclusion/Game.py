@@ -23,11 +23,22 @@ clock = pygame.time.Clock()
 #Create board
 board = Board(screen, 10, 10)
 control = ControlTower(board.get_tiles())
+board.add_plane((0, 0))
 board.add_plane((0, 1))
-control.move_plane_random((0, 1))
-
+board.add_plane((0, 2))
+board.add_plane((0, 3))
+board.add_plane((0, 4))
+board.add_plane((0, 5))
+board.add_plane((0, 6))
+board.add_plane((0, 7))
+board.add_plane((0, 8))
+board.add_plane((0, 9))
 
 finish = False
+score = 0
+moves = 0
+tries = 0
+crashes = 0
 while not finish:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -35,9 +46,14 @@ while not finish:
     #Game stuff
     for x in xrange(0, 10):
         for y in xrange(0, 10):
-            control.control_coord((x, y))
+            if not control.get_tile_at_coord((x, y)).get_plane() is None:
+                moves += 1
+            score += control.control_coord((x, y))
+    if moves >= 4000:
+        print "score: {}, moves: {}".format(score, moves)
+        finish = True
     board.draw()
 
     #Render
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(1000)
